@@ -1,0 +1,12 @@
+# Dependencies and builds
+node_modules/
+dist/
+dist-ssr/
+# Local secrets
+.env
+.env.*
+!.env.example
+# Local files and logs
+*.local
+*.log
+.DS_Store

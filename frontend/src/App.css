@@ -1,0 +1,337 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f4f7fb;
+  color: #0f172a;
+  font-family:
+    Inter,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+.page {
+  width: min(1180px, 92%);
+  margin: 0 auto;
+  padding: 60px 0;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 30px;
+
+  margin-bottom: 35px;
+}
+
+.eyebrow {
+  display: inline-block;
+
+  margin-bottom: 8px;
+
+  color: #2563eb;
+
+  font-size: 0.8rem;
+  font-weight: 800;
+
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.page-header h1 {
+  margin: 0;
+
+  font-size: 2.8rem;
+  letter-spacing: -0.04em;
+}
+
+.page-header p {
+  margin: 10px 0 0;
+
+  color: #64748b;
+}
+
+.metric-card {
+  min-width: 170px;
+
+  padding: 20px 24px;
+
+  border: 1px solid #e2e8f0;
+  border-radius: 18px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 10px 30px rgba(15, 23, 42, 0.05);
+}
+
+.metric-card span,
+.metric-card strong {
+  display: block;
+}
+
+.metric-card span {
+  color: #64748b;
+  font-size: 0.8rem;
+}
+
+.metric-card strong {
+  margin-top: 4px;
+
+  color: #2563eb;
+
+  font-size: 2rem;
+}
+
+.content-grid {
+  display: grid;
+
+  grid-template-columns: 0.75fr 1.25fr;
+
+  gap: 28px;
+  align-items: start;
+}
+
+.client-form,
+.clients-card {
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+
+  background: #ffffff;
+
+  box-shadow:
+    0 12px 35px rgba(15, 23, 42, 0.05);
+}
+
+.client-form {
+  display: flex;
+  flex-direction: column;
+
+  gap: 18px;
+
+  padding: 28px;
+}
+
+.client-form h2,
+.clients-card h2 {
+  margin: 0;
+
+  color: #0f172a;
+}
+
+.client-form label {
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+
+  color: #334155;
+
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.client-form input {
+  width: 100%;
+
+  padding: 13px 14px;
+
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+
+  outline: none;
+
+  color: #0f172a;
+  background: #ffffff;
+
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.client-form input:focus {
+  border-color: #2563eb;
+
+  box-shadow:
+    0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.client-form button {
+  min-height: 48px;
+
+  border: 0;
+  border-radius: 10px;
+
+  background: #2563eb;
+  color: #ffffff;
+
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.client-form button:hover {
+  background: #1d4ed8;
+}
+
+.message {
+  margin: 0;
+
+  padding: 11px 13px;
+
+  border-radius: 9px;
+
+  font-size: 0.85rem;
+}
+
+.message.error {
+  color: #b91c1c;
+  background: #fef2f2;
+}
+
+.message.success {
+  color: #15803d;
+  background: #f0fdf4;
+}
+
+.clients-card {
+  overflow: hidden;
+}
+
+.clients-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  padding: 26px;
+
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.clients-header>div>span {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #64748b;
+
+  font-size: 0.78rem;
+
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.counter {
+  display: grid;
+  place-items: center;
+
+  min-width: 40px;
+  height: 40px;
+
+  padding: 0 10px;
+
+  border-radius: 12px;
+
+  background: #eff6ff;
+  color: #2563eb;
+
+  font-weight: 800;
+}
+
+.clients-list {
+  display: grid;
+}
+
+.client-item {
+  display: flex;
+  align-items: center;
+
+  gap: 15px;
+
+  padding: 20px 26px;
+
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.client-item:last-child {
+  border-bottom: 0;
+}
+
+.client-avatar {
+  width: 44px;
+  height: 44px;
+
+  flex-shrink: 0;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 12px;
+
+  background: #eff6ff;
+  color: #2563eb;
+
+  font-weight: 800;
+}
+
+.client-info {
+  min-width: 0;
+}
+
+.client-info strong,
+.client-info span,
+.client-info small {
+  display: block;
+}
+
+.client-info span {
+  margin-top: 3px;
+
+  color: #64748b;
+
+  font-size: 0.88rem;
+}
+
+.client-info small {
+  margin-top: 4px;
+
+  color: #94a3b8;
+}
+
+.empty-state {
+  padding: 40px 26px;
+
+  color: #94a3b8;
+
+  text-align: center;
+}
+
+@media (max-width: 800px) {
+  .page {
+    padding: 35px 0;
+  }
+
+  .page-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .metric-card {
+    width: 100%;
+  }
+
+  .content-grid {
+    grid-template-columns: 1fr;
+  }
+}
