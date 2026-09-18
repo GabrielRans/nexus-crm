@@ -4,8 +4,10 @@
 
 body {
   margin: 0;
+
   background: #f4f7fb;
   color: #0f172a;
+
   font-family:
     Inter,
     system-ui,
@@ -20,16 +22,30 @@ input {
   font: inherit;
 }
 
+button {
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
+}
+
 .page {
   width: min(1180px, 92%);
+
   margin: 0 auto;
+
   padding: 60px 0;
 }
 
+/* HEADER */
+
 .page-header {
   display: flex;
+
   align-items: flex-end;
   justify-content: space-between;
+
   gap: 30px;
 
   margin-bottom: 35px;
@@ -53,6 +69,7 @@ input {
   margin: 0;
 
   font-size: 2.8rem;
+
   letter-spacing: -0.04em;
 }
 
@@ -61,6 +78,8 @@ input {
 
   color: #64748b;
 }
+
+/* MÉTRICA */
 
 .metric-card {
   min-width: 170px;
@@ -83,6 +102,7 @@ input {
 
 .metric-card span {
   color: #64748b;
+
   font-size: 0.8rem;
 }
 
@@ -94,14 +114,20 @@ input {
   font-size: 2rem;
 }
 
+/* GRID */
+
 .content-grid {
   display: grid;
 
-  grid-template-columns: 0.75fr 1.25fr;
+  grid-template-columns:
+    minmax(300px, 0.75fr) minmax(0, 1.25fr);
 
   gap: 28px;
+
   align-items: start;
 }
+
+/* CARDS */
 
 .client-form,
 .clients-card {
@@ -114,6 +140,8 @@ input {
     0 12px 35px rgba(15, 23, 42, 0.05);
 }
 
+/* FORM */
+
 .client-form {
   display: flex;
   flex-direction: column;
@@ -123,11 +151,46 @@ input {
   padding: 28px;
 }
 
+.form-title {
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 15px;
+}
+
+.form-title>div>span {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #64748b;
+
+  font-size: 0.72rem;
+  font-weight: 700;
+
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
 .client-form h2,
 .clients-card h2 {
   margin: 0;
 
   color: #0f172a;
+}
+
+.editing-badge {
+  padding: 7px 10px;
+
+  border-radius: 999px;
+
+  background: #eff6ff;
+  color: #2563eb;
+
+  font-size: 0.75rem;
+  font-weight: 800;
 }
 
 .client-form label {
@@ -152,8 +215,8 @@ input {
 
   outline: none;
 
-  color: #0f172a;
   background: #ffffff;
+  color: #0f172a;
 
   transition:
     border-color 0.2s ease,
@@ -167,7 +230,9 @@ input {
     0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-.client-form button {
+/* FORM BUTTONS */
+
+.primary-button {
   min-height: 48px;
 
   border: 0;
@@ -181,9 +246,40 @@ input {
   cursor: pointer;
 }
 
-.client-form button:hover {
+.primary-button:hover:not(:disabled) {
   background: #1d4ed8;
+
+  transform: translateY(-1px);
 }
+
+.cancel-button {
+  min-height: 44px;
+
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+
+  background: #ffffff;
+  color: #475569;
+
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.cancel-button:hover:not(:disabled) {
+  background: #f8fafc;
+
+  border-color: #94a3b8;
+}
+
+.primary-button:disabled,
+.cancel-button:disabled {
+  opacity: 0.6;
+
+  cursor: not-allowed;
+}
+
+/* MESSAGES */
 
 .message {
   margin: 0;
@@ -197,13 +293,17 @@ input {
 
 .message.error {
   color: #b91c1c;
+
   background: #fef2f2;
 }
 
 .message.success {
   color: #15803d;
+
   background: #f0fdf4;
 }
+
+/* CLIENT LIST */
 
 .clients-card {
   overflow: hidden;
@@ -211,6 +311,7 @@ input {
 
 .clients-header {
   display: flex;
+
   align-items: center;
   justify-content: space-between;
 
@@ -255,6 +356,7 @@ input {
 
 .client-item {
   display: flex;
+
   align-items: center;
 
   gap: 15px;
@@ -262,10 +364,21 @@ input {
   padding: 20px 26px;
 
   border-bottom: 1px solid #f1f5f9;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
 }
 
 .client-item:last-child {
   border-bottom: 0;
+}
+
+.client-item.editing {
+  background: #f8fbff;
+
+  box-shadow:
+    inset 3px 0 0 #2563eb;
 }
 
 .client-avatar {
@@ -287,6 +400,8 @@ input {
 
 .client-info {
   min-width: 0;
+
+  flex: 1;
 }
 
 .client-info strong,
@@ -301,12 +416,68 @@ input {
   color: #64748b;
 
   font-size: 0.88rem;
+
+  overflow-wrap: anywhere;
 }
 
 .client-info small {
   margin-top: 4px;
 
   color: #94a3b8;
+}
+
+/* CLIENT ACTIONS */
+
+.client-actions {
+  display: flex;
+
+  gap: 8px;
+
+  margin-left: auto;
+}
+
+.edit-button,
+.delete-button {
+  padding: 8px 12px;
+
+  border-radius: 8px;
+
+  font-size: 0.8rem;
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.edit-button {
+  border: 1px solid #bfdbfe;
+
+  background: #ffffff;
+  color: #2563eb;
+}
+
+.edit-button:hover {
+  background: #eff6ff;
+
+  border-color: #60a5fa;
+}
+
+.delete-button {
+  border: 1px solid #fecaca;
+
+  background: #ffffff;
+  color: #dc2626;
+}
+
+.delete-button:hover:not(:disabled) {
+  background: #fef2f2;
+
+  border-color: #f87171;
+}
+
+.delete-button:disabled {
+  opacity: 0.6;
+
+  cursor: not-allowed;
 }
 
 .empty-state {
@@ -317,6 +488,8 @@ input {
   text-align: center;
 }
 
+/* RESPONSIVE */
+
 @media (max-width: 800px) {
   .page {
     padding: 35px 0;
@@ -324,6 +497,7 @@ input {
 
   .page-header {
     align-items: stretch;
+
     flex-direction: column;
   }
 
@@ -336,34 +510,70 @@ input {
   }
 }
 
-.delete-button {
-  margin-left: auto;
+@media (max-width: 560px) {
+  .page {
+    width: min(94%, 1180px);
+  }
 
-  padding: 8px 12px;
+  .page-header h1 {
+    font-size: 2.2rem;
+  }
 
-  border: 1px solid #fecaca;
-  border-radius: 8px;
+  .client-form {
+    padding: 22px;
+  }
 
+  .clients-header {
+    padding: 22px;
+  }
+
+  .client-item {
+    align-items: flex-start;
+
+    flex-wrap: wrap;
+
+    padding: 18px 22px;
+  }
+
+  .client-actions {
+    width: 100%;
+
+    margin-left: 59px;
+  }
+
+  .edit-button,
+  .delete-button {
+    flex: 1;
+  }
+}
+
+.search-box {
+  padding: 18px 26px;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 12px 14px;
+
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+
+  outline: none;
+
+  background: #f8fafc;
+  color: #0f172a;
+
+  transition: 
+  border-color 0.2s ease,
+  box-shadow 0.2s ease,
+  background 0.2s ease;
+}
+
+.search-box input:focus {
+  border-color: #2563eb;
   background: #ffffff;
-  color: #dc2626;
 
-  font-size: 0.8rem;
-  font-weight: 700;
-
-  cursor: pointer;
-
-  transition:
-    background 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.delete-button:hover:not(:disabled) {
-  background: #fef2f2;
-  border-color: #f87171;
-}
-
-.delete-button:disabled,
-.client-form button:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+  box-shadow:
+  0 0 0 3px rgba(37, 99, 235, 0.1);
 }

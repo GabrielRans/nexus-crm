@@ -8,6 +8,7 @@ import {
   createClient,
   deleteClient,
   getClients,
+  updateClient,
   type Client,
 } from './services/api'
 
@@ -26,36 +27,88 @@ function App() {
   const [deletingId, setDeletingId] =
     useState<string | null>(null)
 
-  useEffect(() => {
-    let cancelled = false
+  const [editingId, setEditingId] =
+    useState<string | null>(null)
 
-    getClients()
-      .then((data) => {
-        if (!cancelled) {
-          setClients(data)
+  const [name, setName] = useState('')
+  const [email, setEmail] = useState('')
+  const [phone, setPhone] = useState('')
+
+  const [searchTerm, setSearchTerm] = useState('')
+
+useEffect(() => {
+  let cancelled = false
+
+  getClients()
+    .then((data) => {
+      if (!cancelled) {
+        setClients(data)
+      }
+    })
+    .catch((error) => {
+      if (!cancelled) {
+        if (error instanceof Error) {
+          setError(error.message)
+        } else {
+          setError(
+            'Não foi possível carregar os clientes.',
+          )
         }
-      })
-      .catch((error) => {
-        if (!cancelled) {
-          if (error instanceof Error) {
-            setError(error.message)
-          } else {
-            setError(
-              'Não foi possível carregar os clientes.',
-            )
-          }
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false)
-        }
+      }
+    })
+    .finally(() => {
+      if (!cancelled) {
+        setLoading(false)
+      }
+    })
+
+  return () => {
+    cancelled = true
+  }
+}, [])
+        const normalizedSearch = searchTerm
+      .trim()
+      .toLowerCase()
+        
+      const filteredClients = clients.filter((client) => {
+        const searchableText = `
+        ${client.name}
+        ${client.email}
+        ${client.phone}
+        `.toLowerCase()
+
+        return searchableText.includes(normalizedSearch)
       })
 
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  function resetForm() {
+    setName('')
+    setEmail('')
+    setPhone('')
+    setEditingId(null)
+  }
+
+  function handleEdit(client: Client) {
+    setError('')
+    setSuccess('')
+
+    setEditingId(client.id)
+
+    setName(client.name)
+    setEmail(client.email)
+    setPhone(client.phone)
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    })
+  }
+
+  function handleCancelEdit() {
+    resetForm()
+
+    setError('')
+    setSuccess('')
+  }
 
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>,
@@ -66,44 +119,56 @@ function App() {
     setSuccess('')
     setSubmitting(true)
 
-    const form = event.currentTarget
-    const formData = new FormData(form)
-
-    const name = String(
-      formData.get('name') ?? '',
-    ).trim()
-
-    const email = String(
-      formData.get('email') ?? '',
-    ).trim()
-
-    const phone = String(
-      formData.get('phone') ?? '',
-    ).trim()
+    const clientData = {
+      name: name.trim(),
+      email: email.trim(),
+      phone: phone.trim(),
+    }
 
     try {
-      const client = await createClient({
-        name,
-        email,
-        phone,
-      })
+      if (editingId) {
+        const updatedClient = await updateClient(
+          editingId,
+          clientData,
+        )
 
-      setClients((currentClients) => [
-        client,
-        ...currentClients,
-      ])
+        setClients((currentClients) =>
+          currentClients.map((client) =>
+            client.id === editingId
+              ? updatedClient
+              : client,
+          ),
+        )
 
-      form.reset()
+        setSuccess(
+          'Cliente atualizado com sucesso.',
+        )
 
-      setSuccess(
-        'Cliente cadastrado com sucesso.',
-      )
+        resetForm()
+      } else {
+        const newClient = await createClient(
+          clientData,
+        )
+
+        setClients((currentClients) => [
+          newClient,
+          ...currentClients,
+        ])
+
+        setSuccess(
+          'Cliente cadastrado com sucesso.',
+        )
+
+        resetForm()
+      }
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message)
       } else {
         setError(
-          'Não foi possível cadastrar o cliente.',
+          editingId
+            ? 'Não foi possível atualizar o cliente.'
+            : 'Não foi possível cadastrar o cliente.',
         )
       }
     } finally {
@@ -134,6 +199,10 @@ function App() {
           (item) => item.id !== client.id,
         ),
       )
+
+      if (editingId === client.id) {
+        resetForm()
+      }
 
       setSuccess(
         'Cliente excluído com sucesso.',
@@ -181,14 +250,37 @@ function App() {
           className="client-form"
           onSubmit={handleSubmit}
         >
-          <h2>Novo cliente</h2>
+          <div className="form-title">
+            <div>
+              <span>
+                {editingId
+                  ? 'Modo de edição'
+                  : 'Cadastro'}
+              </span>
+
+              <h2>
+                {editingId
+                  ? 'Editar cliente'
+                  : 'Novo cliente'}
+              </h2>
+            </div>
+
+            {editingId && (
+              <span className="editing-badge">
+                Editando
+              </span>
+            )}
+          </div>
 
           <label>
             Nome
 
             <input
-              name="name"
               type="text"
+              value={name}
+              onChange={(event) =>
+                setName(event.target.value)
+              }
               placeholder="Nome do cliente"
               minLength={2}
               maxLength={100}
@@ -200,8 +292,11 @@ function App() {
             E-mail
 
             <input
-              name="email"
               type="email"
+              value={email}
+              onChange={(event) =>
+                setEmail(event.target.value)
+              }
               placeholder="cliente@email.com"
               maxLength={150}
               required
@@ -212,8 +307,11 @@ function App() {
             Telefone
 
             <input
-              name="phone"
               type="tel"
+              value={phone}
+              onChange={(event) =>
+                setPhone(event.target.value)
+              }
               placeholder="(62) 99999-9999"
               minLength={8}
               maxLength={20}
@@ -222,13 +320,29 @@ function App() {
           </label>
 
           <button
+            className="primary-button"
             type="submit"
             disabled={submitting}
           >
             {submitting
-              ? 'Cadastrando...'
-              : 'Cadastrar cliente'}
+              ? editingId
+                ? 'Salvando...'
+                : 'Cadastrando...'
+              : editingId
+                ? 'Salvar alterações'
+                : 'Cadastrar cliente'}
           </button>
+
+          {editingId && (
+            <button
+              className="cancel-button"
+              type="button"
+              onClick={handleCancelEdit}
+              disabled={submitting}
+            >
+              Cancelar edição
+            </button>
+          )}
 
           {error && (
             <p className="message error">
@@ -246,6 +360,16 @@ function App() {
         <section className="clients-card">
           <div className="clients-header">
             <div>
+              <div className="search-box">
+                <input
+                type="search"
+                placeholder="buscar por nome, e-mail ou telefone..."
+                value={searchTerm}
+                onChange={(event) =>
+                  setSearchTerm(event.target.value)
+              }
+              />
+               </div>
               <span>
                 Base de clientes
               </span>
@@ -268,11 +392,19 @@ function App() {
             <p className="empty-state">
               Nenhum cliente cadastrado ainda.
             </p>
-          ) : (
+          ) : filteredClients.length === 0 ? (
+            <p className="empty-state">
+              Nenhum cliente encontrado.
+            </p> 
+            ) : (
             <div className="clients-list">
-              {clients.map((client) => (
+              {filteredClients.map((client) => (
                 <article
-                  className="client-item"
+                  className={
+                    editingId === client.id
+                      ? 'client-item editing'
+                      : 'client-item'
+                  }
                   key={client.id}
                 >
                   <div className="client-avatar">
@@ -295,20 +427,32 @@ function App() {
                     </small>
                   </div>
 
-                  <button
-                    className="delete-button"
-                    type="button"
-                    disabled={
-                      deletingId === client.id
-                    }
-                    onClick={() =>
-                      handleDelete(client)
-                    }
-                  >
-                    {deletingId === client.id
-                      ? 'Excluindo...'
-                      : 'Excluir'}
-                  </button>
+                  <div className="client-actions">
+                    <button
+                      className="edit-button"
+                      type="button"
+                      onClick={() =>
+                        handleEdit(client)
+                      }
+                    >
+                      Editar
+                    </button>
+
+                    <button
+                      className="delete-button"
+                      type="button"
+                      disabled={
+                        deletingId === client.id
+                      }
+                      onClick={() =>
+                        handleDelete(client)
+                      }
+                    >
+                      {deletingId === client.id
+                        ? 'Excluindo...'
+                        : 'Excluir'}
+                    </button>
+                  </div>
                 </article>
               ))}
             </div>
