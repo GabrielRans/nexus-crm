@@ -1,4 +1,6 @@
-const API_URL = 'http://127.0.0.1:3333'
+const API_URL =
+  import.meta.env.VITE_API_URL ??
+  'http://127.0.0.1:3333'
 
 export type Client = {
   id: string
@@ -14,11 +16,37 @@ export type CreateClientData = {
   phone: string
 }
 
+export type UpdateClientData = {
+  name?: string
+  email?: string
+  phone?: string
+}
+
+async function getErrorMessage(
+  response: Response,
+): Promise<string> {
+  try {
+    const data = await response.json()
+
+    return (
+      data.error ??
+      data.message ??
+      `Erro HTTP ${response.status}`
+    )
+  } catch {
+    return `Erro HTTP ${response.status}`
+  }
+}
+
 export async function getClients(): Promise<Client[]> {
-  const response = await fetch(`${API_URL}/clients`)
+  const response = await fetch(
+    `${API_URL}/clients`,
+  )
 
   if (!response.ok) {
-    throw new Error('Erro ao buscar clientes')
+    throw new Error(
+      await getErrorMessage(response),
+    )
   }
 
   return response.json()
@@ -27,19 +55,70 @@ export async function getClients(): Promise<Client[]> {
 export async function createClient(
   data: CreateClientData,
 ): Promise<Client> {
-  const response = await fetch(`${API_URL}/clients`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
+  const response = await fetch(
+    `${API_URL}/clients`,
+    {
+      method: 'POST',
+
+      headers: {
+        'Content-Type': 'application/json',
+      },
+
+      body: JSON.stringify(data),
     },
-    body: JSON.stringify(data),
-  })
+  )
 
   if (!response.ok) {
-    const error = await response.json()
-
-    throw new Error(error.error ?? 'Erro ao criar cliente')
+    throw new Error(
+      await getErrorMessage(response),
+    )
   }
 
   return response.json()
+}
+
+export async function updateClient(
+  id: string,
+  data: UpdateClientData,
+): Promise<Client> {
+  const response = await fetch(
+    `${API_URL}/clients/${id}`,
+    {
+      method: 'PUT',
+
+      headers: {
+        'Content-Type': 'application/json',
+      },
+
+      body: JSON.stringify(data),
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(response),
+    )
+  }
+
+  return response.json()
+}
+
+export async function deleteClient(
+  id: string,
+): Promise<void> {
+  const response = await fetch(
+    `${API_URL}/clients/${id}`,
+    {
+      method: 'DELETE',
+    },
+  )
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(response),
+    )
+  }
+
+  // DELETE retorna 204 No Content.
+  // NÃO use response.json() aqui.
 }

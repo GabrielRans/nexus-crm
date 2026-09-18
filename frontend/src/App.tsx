@@ -1,7 +1,12 @@
-import { useEffect, useState, type FormEvent } from 'react'
+import {
+  useEffect,
+  useState,
+  type FormEvent,
+} from 'react'
 
 import {
   createClient,
+  deleteClient,
   getClients,
   type Client,
 } from './services/api'
@@ -11,43 +16,46 @@ import './App.css'
 function App() {
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
+
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
- async function loadClients() {
-  try {
-    const data = await getClients()
+  const [submitting, setSubmitting] =
+    useState(false)
 
-    setClients(data)
-  } catch {
-    setError('Não foi possível carregar os clientes.')
-  }
-}
+  const [deletingId, setDeletingId] =
+    useState<string | null>(null)
 
-useEffect(() => {
-  let cancelled = false
+  useEffect(() => {
+    let cancelled = false
 
-  getClients()
-    .then((data) => {
-      if (!cancelled) {
-        setClients(data)
-      }
-    })
-    .catch(() => {
-      if (!cancelled) {
-        setError('Não foi possível carregar os clientes.')
-      }
-    })
-    .finally(() => {
-      if (!cancelled) {
-        setLoading(false)
-      }
-    })
+    getClients()
+      .then((data) => {
+        if (!cancelled) {
+          setClients(data)
+        }
+      })
+      .catch((error) => {
+        if (!cancelled) {
+          if (error instanceof Error) {
+            setError(error.message)
+          } else {
+            setError(
+              'Não foi possível carregar os clientes.',
+            )
+          }
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false)
+        }
+      })
 
-  return () => {
-    cancelled = true
-  }
-}, [])
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   async function handleSubmit(
     event: FormEvent<HTMLFormElement>,
@@ -56,32 +64,90 @@ useEffect(() => {
 
     setError('')
     setSuccess('')
+    setSubmitting(true)
 
     const form = event.currentTarget
     const formData = new FormData(form)
 
-    const name = String(formData.get('name') ?? '')
-    const email = String(formData.get('email') ?? '')
-    const phone = String(formData.get('phone') ?? '')
+    const name = String(
+      formData.get('name') ?? '',
+    ).trim()
+
+    const email = String(
+      formData.get('email') ?? '',
+    ).trim()
+
+    const phone = String(
+      formData.get('phone') ?? '',
+    ).trim()
 
     try {
-      await createClient({
+      const client = await createClient({
         name,
         email,
         phone,
       })
 
+      setClients((currentClients) => [
+        client,
+        ...currentClients,
+      ])
+
       form.reset()
 
-      setSuccess('Cliente cadastrado com sucesso.')
-
-      await loadClients()
+      setSuccess(
+        'Cliente cadastrado com sucesso.',
+      )
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message)
       } else {
-        setError('Erro ao cadastrar cliente.')
+        setError(
+          'Não foi possível cadastrar o cliente.',
+        )
       }
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  async function handleDelete(
+    client: Client,
+  ) {
+    const confirmed = window.confirm(
+      `Tem certeza que deseja excluir ${client.name}?`,
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    setError('')
+    setSuccess('')
+    setDeletingId(client.id)
+
+    try {
+      await deleteClient(client.id)
+
+      setClients((currentClients) =>
+        currentClients.filter(
+          (item) => item.id !== client.id,
+        ),
+      )
+
+      setSuccess(
+        'Cliente excluído com sucesso.',
+      )
+    } catch (error) {
+      if (error instanceof Error) {
+        setError(error.message)
+      } else {
+        setError(
+          'Não foi possível excluir o cliente.',
+        )
+      }
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -89,18 +155,24 @@ useEffect(() => {
     <main className="page">
       <section className="page-header">
         <div>
-          <span className="eyebrow">NexusCRM</span>
+          <span className="eyebrow">
+            NexusCRM
+          </span>
 
           <h1>Clientes</h1>
 
           <p>
-            Cadastre e acompanhe os clientes da sua empresa.
+            Cadastre e acompanhe os clientes
+            da sua empresa.
           </p>
         </div>
 
         <div className="metric-card">
           <span>Total de clientes</span>
-          <strong>{clients.length}</strong>
+
+          <strong>
+            {clients.length}
+          </strong>
         </div>
       </section>
 
@@ -113,38 +185,49 @@ useEffect(() => {
 
           <label>
             Nome
+
             <input
               name="name"
               type="text"
               placeholder="Nome do cliente"
               minLength={2}
+              maxLength={100}
               required
             />
           </label>
 
           <label>
             E-mail
+
             <input
               name="email"
               type="email"
               placeholder="cliente@email.com"
+              maxLength={150}
               required
             />
           </label>
 
           <label>
             Telefone
+
             <input
               name="phone"
               type="tel"
               placeholder="(62) 99999-9999"
               minLength={8}
+              maxLength={20}
               required
             />
           </label>
 
-          <button type="submit">
-            Cadastrar cliente
+          <button
+            type="submit"
+            disabled={submitting}
+          >
+            {submitting
+              ? 'Cadastrando...'
+              : 'Cadastrar cliente'}
           </button>
 
           {error && (
@@ -163,8 +246,13 @@ useEffect(() => {
         <section className="clients-card">
           <div className="clients-header">
             <div>
-              <span>Base de clientes</span>
-              <h2>Clientes cadastrados</h2>
+              <span>
+                Base de clientes
+              </span>
+
+              <h2>
+                Clientes cadastrados
+              </h2>
             </div>
 
             <span className="counter">
@@ -206,6 +294,21 @@ useEffect(() => {
                       {client.phone}
                     </small>
                   </div>
+
+                  <button
+                    className="delete-button"
+                    type="button"
+                    disabled={
+                      deletingId === client.id
+                    }
+                    onClick={() =>
+                      handleDelete(client)
+                    }
+                  >
+                    {deletingId === client.id
+                      ? 'Excluindo...'
+                      : 'Excluir'}
+                  </button>
                 </article>
               ))}
             </div>

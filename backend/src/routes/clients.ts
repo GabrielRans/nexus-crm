@@ -1,12 +1,13 @@
 import type { FastifyInstance } from 'fastify'
 import { randomUUID } from 'node:crypto'
 
+import { db } from '../lib/db.js'
+
 import {
+  clientIdSchema,
   createClientSchema,
   updateClientSchema,
 } from '../schemas/client.js'
-
-import { db } from '../lib/db.js'
 
 type ClientRow = {
   id: string
@@ -17,51 +18,78 @@ type ClientRow = {
 }
 
 export async function clientRoutes(app: FastifyInstance) {
-  app.get('/clients', async () => {
-    const result = await db.query<ClientRow>(
-      `
-      SELECT
-        id,
-        name,
-        email,
-        phone,
-        created_at
-      FROM clients
-      ORDER BY created_at DESC
-      `,
-    )
+  // LISTAR TODOS
+  app.get('/clients', async (_request, reply) => {
+    try {
+      const result = await db.query<ClientRow>(
+        `
+        SELECT
+          id,
+          name,
+          email,
+          phone,
+          created_at
+        FROM clients
+        ORDER BY created_at DESC
+        `,
+      )
 
-    return result.rows
+      return reply.send(result.rows)
+    } catch (error) {
+      app.log.error(error)
+
+      return reply.status(500).send({
+        error: 'Erro interno ao buscar clientes',
+      })
+    }
   })
 
+  // BUSCAR POR ID
   app.get('/clients/:id', async (request, reply) => {
-    const { id } = request.params as { id: string }
+    const params = request.params as { id: string }
 
-    const result = await db.query<ClientRow>(
-      `
-      SELECT
-        id,
-        name,
-        email,
-        phone,
-        created_at
-      FROM clients
-      WHERE id = $1
-      `,
-      [id],
-    )
+    const idValidation = clientIdSchema.safeParse(params.id)
 
-    const client = result.rows[0]
-
-    if (!client) {
-      return reply.status(404).send({
-        error: 'Cliente não encontrado',
+    if (!idValidation.success) {
+      return reply.status(400).send({
+        error: 'ID de cliente inválido',
       })
     }
 
-    return client
+    try {
+      const result = await db.query<ClientRow>(
+        `
+        SELECT
+          id,
+          name,
+          email,
+          phone,
+          created_at
+        FROM clients
+        WHERE id = $1
+        `,
+        [idValidation.data],
+      )
+
+      const client = result.rows[0]
+
+      if (!client) {
+        return reply.status(404).send({
+          error: 'Cliente não encontrado',
+        })
+      }
+
+      return reply.send(client)
+    } catch (error) {
+      app.log.error(error)
+
+      return reply.status(500).send({
+        error: 'Erro interno ao buscar cliente',
+      })
+    }
   })
 
+  // CRIAR CLIENTE
   app.post('/clients', async (request, reply) => {
     const validation = createClientSchema.safeParse(request.body)
 
@@ -72,49 +100,78 @@ export async function clientRoutes(app: FastifyInstance) {
       })
     }
 
-    const { name, email, phone } = validation.data
+    const name = validation.data.name
+    const email = validation.data.email.toLowerCase()
+    const phone = validation.data.phone
 
-    const existingClient = await db.query(
-      `
-      SELECT id
-      FROM clients
-      WHERE LOWER(email) = LOWER($1)
-      `,
-      [email],
-    )
+    try {
+      const existingClient = await db.query(
+        `
+        SELECT id
+        FROM clients
+        WHERE LOWER(email) = LOWER($1)
+        `,
+        [email],
+      )
 
-    if (existingClient.rowCount && existingClient.rowCount > 0) {
-      return reply.status(409).send({
-        error: 'Já existe um cliente com este e-mail',
+      if ((existingClient.rowCount ?? 0) > 0) {
+        return reply.status(409).send({
+          error: 'Já existe um cliente com este e-mail',
+        })
+      }
+
+      const id = randomUUID()
+
+      const result = await db.query<ClientRow>(
+        `
+        INSERT INTO clients (
+          id,
+          name,
+          email,
+          phone
+        )
+        VALUES ($1, $2, $3, $4)
+        RETURNING
+          id,
+          name,
+          email,
+          phone,
+          created_at
+        `,
+        [id, name, email, phone],
+      )
+
+      return reply.status(201).send(result.rows[0])
+    } catch (error) {
+      const databaseError = error as {
+        code?: string
+      }
+
+      if (databaseError.code === '23505') {
+        return reply.status(409).send({
+          error: 'Já existe um cliente com este e-mail',
+        })
+      }
+
+      app.log.error(error)
+
+      return reply.status(500).send({
+        error: 'Erro interno ao cadastrar cliente',
       })
     }
-
-    const id = randomUUID()
-
-    const result = await db.query<ClientRow>(
-      `
-      INSERT INTO clients (
-        id,
-        name,
-        email,
-        phone
-      )
-      VALUES ($1, $2, $3, $4)
-      RETURNING
-        id,
-        name,
-        email,
-        phone,
-        created_at
-      `,
-      [id, name, email, phone],
-    )
-
-    return reply.status(201).send(result.rows[0])
   })
 
+  // ATUALIZAR CLIENTE
   app.put('/clients/:id', async (request, reply) => {
-    const { id } = request.params as { id: string }
+    const params = request.params as { id: string }
+
+    const idValidation = clientIdSchema.safeParse(params.id)
+
+    if (!idValidation.success) {
+      return reply.status(400).send({
+        error: 'ID de cliente inválido',
+      })
+    }
 
     const validation = updateClientSchema.safeParse(request.body)
 
@@ -125,82 +182,120 @@ export async function clientRoutes(app: FastifyInstance) {
       })
     }
 
-    const currentClient = await db.query<ClientRow>(
-      `
-      SELECT *
-      FROM clients
-      WHERE id = $1
-      `,
-      [id],
-    )
+    const id = idValidation.data
 
-    if (currentClient.rowCount === 0) {
-      return reply.status(404).send({
-        error: 'Cliente não encontrado',
+    try {
+      const currentResult = await db.query<ClientRow>(
+        `
+        SELECT
+          id,
+          name,
+          email,
+          phone,
+          created_at
+        FROM clients
+        WHERE id = $1
+        `,
+        [id],
+      )
+
+      const currentClient = currentResult.rows[0]
+
+      if (!currentClient) {
+        return reply.status(404).send({
+          error: 'Cliente não encontrado',
+        })
+      }
+
+      const name =
+        validation.data.name ?? currentClient.name
+
+      const email =
+        validation.data.email?.toLowerCase() ??
+        currentClient.email
+
+      const phone =
+        validation.data.phone ?? currentClient.phone
+
+      const emailConflict = await db.query(
+        `
+        SELECT id
+        FROM clients
+        WHERE LOWER(email) = LOWER($1)
+          AND id <> $2
+        `,
+        [email, id],
+      )
+
+      if ((emailConflict.rowCount ?? 0) > 0) {
+        return reply.status(409).send({
+          error: 'Já existe outro cliente com este e-mail',
+        })
+      }
+
+      const result = await db.query<ClientRow>(
+        `
+        UPDATE clients
+        SET
+          name = $1,
+          email = $2,
+          phone = $3
+        WHERE id = $4
+        RETURNING
+          id,
+          name,
+          email,
+          phone,
+          created_at
+        `,
+        [name, email, phone, id],
+      )
+
+      return reply.send(result.rows[0])
+    } catch (error) {
+      app.log.error(error)
+
+      return reply.status(500).send({
+        error: 'Erro interno ao atualizar cliente',
       })
     }
-
-    const current = currentClient.rows[0]
-
-    const name = validation.data.name ?? current.name
-    const email = validation.data.email ?? current.email
-    const phone = validation.data.phone ?? current.phone
-
-    const emailConflict = await db.query(
-      `
-      SELECT id
-      FROM clients
-      WHERE LOWER(email) = LOWER($1)
-        AND id <> $2
-      `,
-      [email, id],
-    )
-
-    if (emailConflict.rowCount && emailConflict.rowCount > 0) {
-      return reply.status(409).send({
-        error: 'Já existe outro cliente com este e-mail',
-      })
-    }
-
-    const result = await db.query<ClientRow>(
-      `
-      UPDATE clients
-      SET
-        name = $1,
-        email = $2,
-        phone = $3
-      WHERE id = $4
-      RETURNING
-        id,
-        name,
-        email,
-        phone,
-        created_at
-      `,
-      [name, email, phone, id],
-    )
-
-    return result.rows[0]
   })
 
+  // EXCLUIR CLIENTE
   app.delete('/clients/:id', async (request, reply) => {
-    const { id } = request.params as { id: string }
+    const params = request.params as { id: string }
 
-    const result = await db.query(
-      `
-      DELETE FROM clients
-      WHERE id = $1
-      RETURNING id
-      `,
-      [id],
-    )
+    const idValidation = clientIdSchema.safeParse(params.id)
 
-    if (result.rowCount === 0) {
-      return reply.status(404).send({
-        error: 'Cliente não encontrado',
+    if (!idValidation.success) {
+      return reply.status(400).send({
+        error: 'ID de cliente inválido',
       })
     }
 
-    return reply.status(204).send()
+    try {
+      const result = await db.query(
+        `
+        DELETE FROM clients
+        WHERE id = $1
+        RETURNING id
+        `,
+        [idValidation.data],
+      )
+
+      if (result.rowCount === 0) {
+        return reply.status(404).send({
+          error: 'Cliente não encontrado',
+        })
+      }
+
+      return reply.status(204).send()
+    } catch (error) {
+      app.log.error(error)
+
+      return reply.status(500).send({
+        error: 'Erro interno ao excluir cliente',
+      })
+    }
   })
 }
