@@ -577,3 +577,77 @@ button {
   box-shadow:
   0 0 0 3px rgba(37, 99, 235, 0.1);
 }
+
+.app-layout {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 240px 1fr;
+}
+
+.sidebar {
+  min-height: 100vh;
+  padding: 28px 18px;
+
+  background: #0f172a;
+  color: #ffffff;
+
+  border-right: 1px solid #1e293b;
+}
+
+.sidebar-brand {
+  display: flex;
+  flex-direction: column;
+
+  gap: 4px;
+
+  padding: 0 10px 28px;
+}
+
+.sidebar-brand strong {
+  font-size: 1.25rem;
+}
+
+.sidebar-brand span {
+  color: #94a3b8;
+  font-size: 0.78rem;
+}
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+
+  gap: 6px;
+}
+
+.nav-link {
+  display: block;
+
+  padding: 11px 13px;
+
+  border-radius: 9px;
+
+  color: #94a3b8;
+
+  font-size: 0.9rem;
+  font-weight: 600;
+
+  text-decoration: none;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.nav-link:hover {
+  background: #1e293b;
+  color: #ffffff;
+}
+
+.nav-link.active {
+  background: #2563eb;
+  color: #ffffff;
+}
+
+.app-content {
+  min-width: 0;
+}
