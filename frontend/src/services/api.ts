@@ -118,7 +118,4 @@ export async function deleteClient(
       await getErrorMessage(response),
     )
   }
-
-  // DELETE retorna 204 No Content.
-  // NÃO use response.json() aqui.
 }
