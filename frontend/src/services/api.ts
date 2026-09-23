@@ -16,6 +16,12 @@ export type CreateClientData = {
   phone: string
 }
 
+export type DashboardData = {
+  totalClients: number
+  recentClientsCount: number
+  latestClients: Client[]
+}
+
 export type UpdateClientData = {
   name?: string
   email?: string
@@ -36,6 +42,20 @@ async function getErrorMessage(
   } catch {
     return `Erro HTTP ${response.status}`
   }
+}
+
+export async function getDashboard(): Promise<DashboardData> {
+  const response = await fetch(
+    `${API_URL}/dashboard`,
+  )
+
+  if (!response.ok) {
+    throw new Error(
+      await getErrorMessage(response),
+    )
+  }
+
+  return response.json()
 }
 
 export async function getClients(): Promise<Client[]> {

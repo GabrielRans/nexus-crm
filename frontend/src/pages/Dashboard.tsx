@@ -4,14 +4,14 @@ import {
 } from 'react'
 
 import {
-  getClients,
-  type Client,
+  getDashboard,
+  type DashboardData,
 } from '../services/api'
 
 function Dashboard() {
   // 1. ESTADOS
-  const [clients, setClients] =
-  useState<Client[]>([])
+  const [DashboardData, setDashboardData] =
+  useState<DashboardData | null>(null)
 
   const [loading, setLoading] =
   useState(true)
@@ -23,10 +23,10 @@ function Dashboard() {
    useEffect(() => {
     let cancelled = false
 
-    getClients()
+    getDashboard()
       .then((data) => {
         if (!cancelled) {
-          setClients(data)
+          setDashboardData(data)
         }
       })
       .catch((error) => {
@@ -52,25 +52,14 @@ function Dashboard() {
    }, [])
 
 // 3. MÉTRICAS CALCULADAS
-      const totalClients = clients.length
+   const totalClients =
+    DashboardData?.totalClients ?? 0
 
-      const sevenDaysAgo = new Date()
+   const recentClientsCount =
+    DashboardData?.recentClientsCount ?? 0
 
-      sevenDaysAgo.setDate(
-        sevenDaysAgo.getDate() - 7,
-      )
-
-      const recentClients = clients.filter(
-        (client) => {
-          const createAt = 
-          new Date(client.created_at)
-
-          return createAt >= sevenDaysAgo
-        },
-      )
-
-      const recentClientsCount = 
-      recentClients.length
+   const latestClients =
+    DashboardData?.latestClients ?? []
 
   // 4. INTERFACE
   return (
@@ -141,15 +130,13 @@ function Dashboard() {
           <p className="empty-state">
             Carregando...
           </p>
-        ) : recentClients.length === 0 ? (
+        ) : latestClients.length === 0 ? (
           <p className="empty-state">
             Nenhum cliente cadastrado nos últimos 7 dias.
           </p>
         ) : (
           <div className="recent-list">
-            {recentClients
-            .slice(0, 5)
-            .map((client) => (
+            {latestClients.map((client) => (
               <article
               className="recent-client"
               key={client.id}

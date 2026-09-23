@@ -3,6 +3,9 @@ import cors from '@fastify/cors'
 
 import { db } from './lib/db.js'
 import { clientRoutes } from './routes/clients.js'
+import { dashboardRoutes } from './routes/dashboard.js'
+
+
 
 const app = Fastify({
   logger: true,
@@ -24,6 +27,7 @@ async function start() {
     })
 
     await app.register(clientRoutes)
+    await app.register(dashboardRoutes)
 
     app.get('/', async () => {
       return {
